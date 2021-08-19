@@ -1,20 +1,12 @@
 package net.imprex.orebfuscator.config;
 
-import java.util.List;
-import java.util.Set;
-
 import org.bukkit.Material;
 
 public interface WorldConfig {
 
-	boolean enabled();
-	void enabled(boolean enabled);
-	
-	List<String> worlds();
+	boolean isEnabled();
 
-	Set<Material> hiddenBlocks();
+	Iterable<Material> hiddenBlocks();
 
-	Set<Material> randomBlocks();
-
-	int randomBlockId();
+	int nextRandomBlockId();
 }

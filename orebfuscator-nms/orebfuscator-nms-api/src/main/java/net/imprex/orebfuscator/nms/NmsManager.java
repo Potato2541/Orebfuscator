@@ -19,11 +19,13 @@ public interface NmsManager {
 
 	Optional<String> getNameByMaterial(Material material);
 
-	Set<Integer> getMaterialIds(Material material);
+	Set<Integer> getBlockIds(Material material);
 
 	boolean isHoe(Material material);
 
 	boolean isAir(int blockId);
+
+	boolean isOccluding(int blockId);
 
 	boolean isTileEntity(int blockId);
 

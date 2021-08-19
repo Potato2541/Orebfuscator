@@ -8,10 +8,10 @@ import net.imprex.orebfuscator.NmsInstance;
 
 public class OrebfuscatorBlockMask implements BlockMask {
 
-	static final OrebfuscatorBlockMask EMPTY_MASK = new OrebfuscatorBlockMask(null, null);
+	private static final OrebfuscatorBlockMask EMPTY_MASK = new OrebfuscatorBlockMask(null, null);
 
 	static OrebfuscatorBlockMask create(OrebfuscatorWorldConfig worldConfig, OrebfuscatorProximityConfig proximityConfig) {
-		if (worldConfig != null || proximityConfig != null) {
+		if ((worldConfig != null && worldConfig.isEnabled()) || (proximityConfig != null && proximityConfig.isEnabled())) {
 			return new OrebfuscatorBlockMask(worldConfig, proximityConfig);
 		}
 		return EMPTY_MASK;
@@ -20,21 +20,21 @@ public class OrebfuscatorBlockMask implements BlockMask {
 	private final int[] blockMask = new int[NmsInstance.getMaterialSize()];
 
 	private OrebfuscatorBlockMask(OrebfuscatorWorldConfig worldConfig, OrebfuscatorProximityConfig proximityConfig) {
-		if (worldConfig != null && worldConfig.enabled()) {
+		if (worldConfig != null && worldConfig.isEnabled()) {
 			for (Material material : worldConfig.hiddenBlocks()) {
-				this.setBlockMask(material, FLAG_OBFUSCATE);
+				this.setBlockBits(material, FLAG_OBFUSCATE);
 			}
 		}
-		if (proximityConfig != null && proximityConfig.enabled()) {
-			for (Entry<Material, Integer> entry : proximityConfig.hiddenBlocks().entrySet()) {
-				this.setBlockMask(entry.getKey(), entry.getValue());
+		if (proximityConfig != null && proximityConfig.isEnabled()) {
+			for (Entry<Material, Integer> entry : proximityConfig.hiddenBlocks()) {
+				this.setBlockBits(entry.getKey(), entry.getValue());
 			}
 		}
 	}
 
-	public void setBlockMask(Material material, int mask) {
-		for (int blockId : NmsInstance.getMaterialIds(material)) {
-			int blockMask = this.blockMask[blockId] | mask;
+	private void setBlockBits(Material material, int bits) {
+		for (int blockId : NmsInstance.getBlockIds(material)) {
+			int blockMask = this.blockMask[blockId] | bits;
 
 			if (NmsInstance.isTileEntity(blockId)) {
 				blockMask |= FLAG_TILE_ENTITY;

@@ -1,100 +1,66 @@
 package net.imprex.orebfuscator.config;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 
 import net.imprex.orebfuscator.NmsInstance;
-import net.imprex.orebfuscator.util.OFCLogger;
-import net.imprex.orebfuscator.util.WeightedRandom;
 
-public class OrebfuscatorWorldConfig implements WorldConfig {
+public class OrebfuscatorWorldConfig extends AbstractConfig implements WorldConfig {
 
-	private boolean enabled;
-	private final List<String> worlds = new ArrayList<>();
 	private final Set<Material> hiddenBlocks = new LinkedHashSet<>();
 
-	private final Map<Material, Integer> randomBlocks = new LinkedHashMap<>();
-	private final WeightedRandom<Integer> randomMaterials = new WeightedRandom<>();
-
-	protected void initialize() {
-		for (Entry<Material, Integer> entry : this.randomBlocks.entrySet()) {
-			int blockId = NmsInstance.getMaterialIds(entry.getKey()).iterator().next();
-			this.randomMaterials.add(entry.getValue(), blockId);
-		}
+	OrebfuscatorWorldConfig(ConfigurationSection section) {
+		this.enabled = section.getBoolean("enabled", true);
+		this.serializeWorlds(section, "worlds");
+		this.serializeMaterials(section, "hiddenBlocks");
+		this.serializeRandomMaterials(section, "randomBlocks");
 	}
 
-	protected void serialize(ConfigurationSection section) {
-		this.enabled(section.getBoolean("enabled", true));
-
-		this.worlds.addAll(section.getStringList("worlds"));
-		if (this.worlds.isEmpty()) {
-			this.failSerialize(
-					String.format("config section '%s.worlds' is missing or empty", section.getCurrentPath()));
-			return;
+	private void serializeMaterials(ConfigurationSection section, String path) {
+		for (String materialName : section.getStringList(path)) {
+			Optional<Material> optional = NmsInstance.getMaterialByName(materialName);
+			if (optional.isPresent()) {
+				this.hiddenBlocks.add(optional.get());
+			} else {
+				warnInvalidMaterial(section.getCurrentPath(), path, materialName);
+			}
 		}
 
-		ConfigParser.serializeMaterialSet(section, this.hiddenBlocks, "hiddenBlocks");
 		if (this.hiddenBlocks.isEmpty()) {
-			this.failSerialize(
-					String.format("config section '%s.hiddenBlocks' is missing or empty", section.getCurrentPath()));
-			return;
-		}
-
-		ConfigParser.serializeRandomMaterialList(section, this.randomBlocks, "randomBlocks");
-		if (this.randomBlocks.isEmpty()) {
-			this.failSerialize(
-					String.format("config section '%s.randomBlocks' is missing or empty", section.getCurrentPath()));
+			this.failMissingOrEmpty(section, path);
 		}
 	}
 
-	protected void deserialize(ConfigurationSection section) {
+	void deserialize(ConfigurationSection section) {
 		section.set("enabled", this.enabled);
-		section.set("worlds", this.worlds);
-
-		ConfigParser.deserializeMaterialSet(section, this.hiddenBlocks, "hiddenBlocks");
-		ConfigParser.deserializeRandomMaterialList(section, this.randomBlocks, "randomBlocks");
+		this.deserializeWorlds(section, "worlds");
+		this.deserializeMaterials(section, "hiddenBlocks");
+		this.deserializeRandomMaterialList(section, "randomBlocks");
 	}
 
-	private void failSerialize(String message) {
-		this.enabled = false;
-		OFCLogger.warn(message);
-	}
+	private void deserializeMaterials(ConfigurationSection section, String path) {
+		List<String> materialNames = new ArrayList<>();
 
-	@Override
-	public boolean enabled() {
-		return this.enabled;
-	}
+		for (Material material : this.hiddenBlocks) {
+			Optional<String> optional = NmsInstance.getNameByMaterial(material);
+			if (optional.isPresent()) {
+				materialNames.add(optional.get());
+			} else {
+				warnInvalidMaterial(section.getCurrentPath(), path, material != null ? material.name() : null);
+			}
+		}
 
-	@Override
-	public void enabled(boolean enabled) {
-		this.enabled = enabled;
-	}
-
-	@Override
-	public List<String> worlds() {
-		return this.worlds;
+		section.set(path, materialNames);
 	}
 
 	@Override
-	public Set<Material> hiddenBlocks() {
+	public Iterable<Material> hiddenBlocks() {
 		return this.hiddenBlocks;
-	}
-
-	@Override
-	public Set<Material> randomBlocks() {
-		return this.randomBlocks.keySet();
-	}
-
-	@Override
-	public int randomBlockId() {
-		return this.randomMaterials.next();
 	}
 }

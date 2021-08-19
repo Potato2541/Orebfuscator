@@ -36,7 +36,7 @@ public class ProximityHider {
 
 	public boolean isInProximityWorld(Player player) {
 		ProximityConfig proximityConfig = this.config.proximity(player.getWorld());
-		return proximityConfig != null && proximityConfig.enabled();
+		return proximityConfig != null && proximityConfig.isEnabled();
 	}
 
 	public void queuePlayerUpdate(Player player) {

@@ -46,7 +46,7 @@ public class ProximityPacketListener extends PacketAdapter {
 
 		World world = player.getWorld();
 		ProximityConfig proximityConfig = config.proximity(world);
-		if (proximityConfig == null || !proximityConfig.enabled()) {
+		if (proximityConfig == null || !proximityConfig.isEnabled()) {
 			return;
 		}
 

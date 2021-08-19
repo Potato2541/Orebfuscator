@@ -45,7 +45,7 @@ public class Deobfuscator {
 
 		World world = Iterables.get(blocks, 0).getWorld();
 		WorldConfig worldConfig = this.config.world(world);
-		if (worldConfig == null || !worldConfig.enabled()) {
+		if (worldConfig == null || !worldConfig.isEnabled()) {
 			return;
 		}
 

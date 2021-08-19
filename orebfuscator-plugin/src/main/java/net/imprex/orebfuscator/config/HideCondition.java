@@ -1,8 +1,8 @@
 package net.imprex.orebfuscator.config;
 
 /**
- * Only use MSBs (24 bit) for HideCondition
- * 16 bit y | 1 bit above flag | 1 present bit
+ * Only use MSBs (20 bit) for HideCondition
+ * 16 bit y | 1 bit above flag | 1 present bit | 2 bit reserved
  */
 public class HideCondition {
 

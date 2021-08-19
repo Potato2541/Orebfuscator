@@ -72,7 +72,7 @@ public class NmsManager extends AbstractNmsManager {
 			int blockId = getBlockId(blockData);
 			this.registerMaterialId(material, blockId);
 			Block block = blockData.getBlock();
-			this.setBlockFlags(blockId, block instanceof BlockAir, block.isTileEntity());
+			this.setBlockFlags(blockId, block instanceof BlockAir, material.isOccluding(), block.isTileEntity());
 		}
 	}
 

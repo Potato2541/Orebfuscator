@@ -1,6 +1,7 @@
 package net.imprex.orebfuscator;
 
 import java.lang.reflect.Constructor;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 
@@ -63,8 +64,13 @@ public class NmsInstance {
 		return instance.getNameByMaterial(material);
 	}
 
-	public static Set<Integer> getMaterialIds(Material material) {
-		return instance.getMaterialIds(material);
+	public static Set<Integer> getBlockIds(Material material) {
+		return instance.getBlockIds(material);
+	}
+
+	public static Optional<Integer> getFirstBlockId(Material material) {
+		Iterator<Integer> blockIds = getBlockIds(material).iterator();
+		return Optional.ofNullable(blockIds.hasNext() ? blockIds.next() : null);
 	}
 
 	public static boolean isHoe(Material material) {
@@ -73,6 +79,10 @@ public class NmsInstance {
 
 	public static boolean isAir(int blockId) {
 		return instance.isAir(blockId);
+	}
+
+	public static boolean isOccluding(int blockId) {
+		return instance.isOccluding(blockId);
 	}
 
 	public static boolean isTileEntity(int blockId) {

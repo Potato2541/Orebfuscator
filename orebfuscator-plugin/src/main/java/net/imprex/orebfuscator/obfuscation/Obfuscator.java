@@ -18,7 +18,6 @@ import net.imprex.orebfuscator.config.OrebfuscatorConfig;
 import net.imprex.orebfuscator.config.ProximityConfig;
 import net.imprex.orebfuscator.config.WorldConfig;
 import net.imprex.orebfuscator.util.BlockPos;
-import net.imprex.orebfuscator.util.MaterialUtil;
 import net.imprex.orebfuscator.util.HeightAccessor;
 
 public class Obfuscator {
@@ -86,7 +85,7 @@ public class Obfuscator {
 					// should current block be obfuscated
 					if (BlockMask.isObfuscateBitSet(obfuscateBits)
 							&& shouldObfuscate(chunk, world, x, y, z, initialRadius)) {
-						blockData = worldConfig.randomBlockId();
+						blockData = worldConfig.nextRandomBlockId();
 						obfuscated = true;
 					}
 
@@ -97,7 +96,7 @@ public class Obfuscator {
 						if (BlockMask.isUseBlockBelowBitSet(obfuscateBits)) {
 							blockData = getBlockBelow(blockMask, chunk, x, y, z);
 						} else {
-							blockData = proximityConfig.randomBlockId();
+							blockData = proximityConfig.nextRandomBlockId();
 						}
 					}
 
@@ -146,7 +145,7 @@ public class Obfuscator {
 			if (blockId == -1) {
 				blockId = NmsInstance.loadChunkAndGetBlockId(world, x, y, z);
 			}
-			if (blockId >= 0 && MaterialUtil.isTransparent(blockId)) {
+			if (blockId >= 0 && !NmsInstance.isOccluding(blockId)) {
 				return true;
 			}
 		}
