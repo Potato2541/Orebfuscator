@@ -28,7 +28,7 @@ import net.imprex.orebfuscator.util.OFCLogger;
 
 public class OrebfuscatorConfig implements Config {
 
-	private static final int CONFIG_VERSION = 2;
+	private static final int CONFIG_VERSION = 1;
 
 	private final OrebfuscatorGeneralConfig generalConfig = new OrebfuscatorGeneralConfig();
 	private final OrebfuscatorCacheConfig cacheConfig = new OrebfuscatorCacheConfig();
@@ -124,7 +124,10 @@ public class OrebfuscatorConfig implements Config {
 		NmsInstance.close();
 		NmsInstance.initialize(this);
 
-		ConfigParser.deserializeSectionList(section, "world").stream()
+		// check if config is still using old path
+		String obfuscationConfigPath = section.contains("world") ? "world" : "obfuscation";
+
+		ConfigParser.deserializeSectionList(section, obfuscationConfigPath).stream()
 				.map(OrebfuscatorObfuscationConfig::new)
 				.forEach(this.obfuscationConfigs::add);
 		if (this.obfuscationConfigs.isEmpty()) {
