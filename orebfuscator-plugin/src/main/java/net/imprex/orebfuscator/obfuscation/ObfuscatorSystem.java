@@ -43,7 +43,7 @@ public class ObfuscatorSystem {
 
 	public CompletableFuture<ObfuscatedChunk> obfuscateOrUseCache(ChunkStruct chunkStruct) {
 		final ChunkPosition position = new ChunkPosition(chunkStruct.world, chunkStruct.chunkX, chunkStruct.chunkZ);
-		final byte[] hash = ChunkCache.hash(this.config.hash(), chunkStruct.data);
+		final byte[] hash = ChunkCache.hash(this.config.configHash(), chunkStruct.data);
 		final ChunkCacheRequest request = new ChunkCacheRequest(this.obfuscator, position, hash, chunkStruct);
 
 		if (this.config.cache().enabled()) {

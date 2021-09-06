@@ -14,16 +14,16 @@ import net.imprex.orebfuscator.NmsInstance;
 import net.imprex.orebfuscator.util.OFCLogger;
 import net.imprex.orebfuscator.util.WeightedRandom;
 
-public class AbstractConfig {
+public abstract class AbstractWorldConfig implements WorldConfig {
 
 	protected boolean enabled = false;
 
 	protected final List<WorldMatcher> worldMatchers = new ArrayList<>();
 
-	protected final Map<Material, Integer> randomMaterials = new LinkedHashMap<>();
-	protected final WeightedRandom<Integer> weightedMaterials = new WeightedRandom<>();
+	protected final Map<Material, Integer> randomBlocks = new LinkedHashMap<>();
+	protected final WeightedRandom<Integer> weightedBlockIds = new WeightedRandom<>();
 
-	protected static void warnInvalidMaterial(String section, String path, String name) {
+	protected static void warnUnkownBlock(String section, String path, String name) {
 		OFCLogger.warn(String.format("config section '%s.%s' contains unknown block '%s'", section, path, name));
 	}
 
@@ -36,7 +36,7 @@ public class AbstractConfig {
 		OFCLogger.warn(message);
 	}
 
-	protected void serializeWorlds(ConfigurationSection section, String path) {
+	protected void deserializeWorlds(ConfigurationSection section, String path) {
 		section.getStringList(path).stream().map(WorldMatcher::parseMatcher).forEach(worldMatchers::add);
 
 		if (this.worldMatchers.isEmpty()) {
@@ -44,52 +44,54 @@ public class AbstractConfig {
 		}
 	}
 
-	protected void deserializeWorlds(ConfigurationSection section, String path) {
-		section.set(path, worldMatchers.stream().map(WorldMatcher::deserialize).collect(Collectors.toList()));
+	protected void serializeWorlds(ConfigurationSection section, String path) {
+		section.set(path, worldMatchers.stream().map(WorldMatcher::serialize).collect(Collectors.toList()));
 	}
 
-	protected void serializeRandomMaterials(ConfigurationSection section, String path) {
-		ConfigurationSection materialSection = section.getConfigurationSection(path);
-		if (materialSection == null) {
+	protected void deserializeRandomBlocks(ConfigurationSection section, String path) {
+		ConfigurationSection blockSection = section.getConfigurationSection(path);
+		if (blockSection == null) {
 			return;
 		}
 
-		for (String name : materialSection.getKeys(false)) {
-			Optional<Material> optional = NmsInstance.getMaterialByName(name);
+		for (String blockName : blockSection.getKeys(false)) {
+			Optional<Material> optional = NmsInstance.getMaterialByName(blockName);
 			if (optional.isPresent()) {
-				int weight = materialSection.getInt(name, 1);
-				this.randomMaterials.put(optional.get(), weight);
+				int weight = blockSection.getInt(blockName, 1);
+				this.randomBlocks.put(optional.get(), weight);
 
 				NmsInstance.getFirstBlockId(optional.get()).ifPresent(blockId -> {
-					this.weightedMaterials.add(weight, blockId);
+					this.weightedBlockIds.add(weight, blockId);
 				});
 			} else {
-				warnInvalidMaterial(section.getCurrentPath(), path, name);
+				warnUnkownBlock(section.getCurrentPath(), path, blockName);
 			}
 		}
 
-		if (this.randomMaterials.isEmpty()) {
+		if (this.randomBlocks.isEmpty()) {
 			this.failMissingOrEmpty(section, path);
 		}
 	}
 
-	protected void deserializeRandomMaterialList(ConfigurationSection section, String path) {
-		ConfigurationSection materialSection = section.createSection(path);
+	protected void serializeRandomBlocks(ConfigurationSection section, String path) {
+		ConfigurationSection blockSection = section.createSection(path);
 
-		for (Material material : this.randomMaterials.keySet()) {
+		for (Material material : this.randomBlocks.keySet()) {
 			Optional<String> optional = NmsInstance.getNameByMaterial(material);
 			if (optional.isPresent()) {
-				materialSection.set(optional.get(), this.randomMaterials.get(material));
+				blockSection.set(optional.get(), this.randomBlocks.get(material));
 			} else {
-				warnInvalidMaterial(section.getCurrentPath(), path, material != null ? material.name() : null);
+				warnUnkownBlock(section.getCurrentPath(), path, material.name());
 			}
 		}
 	}
 
+	@Override
 	public boolean isEnabled() {
 		return enabled;
 	}
 
+	@Override
 	public boolean matchesWorldName(String worldName) {
 		for (WorldMatcher matcher : this.worldMatchers) {
 			if (matcher.test(worldName)) {
@@ -99,7 +101,8 @@ public class AbstractConfig {
 		return false;
 	}
 
+	@Override
 	public int nextRandomBlockId() {
-		return this.weightedMaterials.next();
+		return this.weightedBlockIds.next();
 	}
 }

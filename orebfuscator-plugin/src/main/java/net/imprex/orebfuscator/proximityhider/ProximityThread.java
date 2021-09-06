@@ -59,7 +59,7 @@ public class ProximityThread extends Thread {
 					}
 
 					int distance = proximityConfig.distance();
-					int distanceSquared = proximityConfig.distanceSquared();
+					int distanceSquared = distance * distance;
 
 					List<BlockPos> updateBlocks = new ArrayList<>();
 					Location eyeLocation = player.getEyeLocation();

@@ -13,10 +13,10 @@ import net.imprex.orebfuscator.cache.ChunkCacheRequest;
 import net.imprex.orebfuscator.chunk.Chunk;
 import net.imprex.orebfuscator.chunk.ChunkSection;
 import net.imprex.orebfuscator.chunk.ChunkStruct;
-import net.imprex.orebfuscator.config.BlockMask;
+import net.imprex.orebfuscator.config.BlockFlags;
 import net.imprex.orebfuscator.config.OrebfuscatorConfig;
 import net.imprex.orebfuscator.config.ProximityConfig;
-import net.imprex.orebfuscator.config.WorldConfig;
+import net.imprex.orebfuscator.config.ObfuscationConfig;
 import net.imprex.orebfuscator.util.BlockPos;
 import net.imprex.orebfuscator.util.HeightAccessor;
 
@@ -48,8 +48,8 @@ public class Obfuscator {
 		ChunkStruct chunkStruct = request.getChunkStruct();
 		HeightAccessor heightAccessor = HeightAccessor.get(world);
 
-		BlockMask blockMask = this.config.blockMask(world);
-		WorldConfig worldConfig = this.config.world(world);
+		BlockFlags blockMask = this.config.blockFlags(world);
+		ObfuscationConfig worldConfig = this.config.obfuscation(world);
 		ProximityConfig proximityConfig = this.config.proximity(world);
 		int initialRadius = this.config.general().initialRadius();
 
@@ -72,8 +72,8 @@ public class Obfuscator {
 
 					int y = baseY + (index >> 8 & 15);
 
-					int obfuscateBits = blockMask.mask(blockData, y);
-					if (BlockMask.isEmpty(obfuscateBits)) {
+					int obfuscateBits = blockMask.flags(blockData, y);
+					if (BlockFlags.isEmpty(obfuscateBits)) {
 						continue;
 					}
 
@@ -83,17 +83,17 @@ public class Obfuscator {
 					boolean obfuscated = false;
 
 					// should current block be obfuscated
-					if (BlockMask.isObfuscateBitSet(obfuscateBits)
+					if (BlockFlags.isObfuscateBitSet(obfuscateBits)
 							&& shouldObfuscate(chunk, world, x, y, z, initialRadius)) {
 						blockData = worldConfig.nextRandomBlockId();
 						obfuscated = true;
 					}
 
 					// should current block be proximity hidden
-					if (!obfuscated && BlockMask.isProximityBitSet(obfuscateBits)) {
+					if (!obfuscated && BlockFlags.isProximityBitSet(obfuscateBits)) {
 						proximityBlocks.add(new BlockPos(x, y, z));
 						obfuscated = true;
-						if (BlockMask.isUseBlockBelowBitSet(obfuscateBits)) {
+						if (BlockFlags.isUseBlockBelowBitSet(obfuscateBits)) {
 							blockData = getBlockBelow(blockMask, chunk, x, y, z);
 						} else {
 							blockData = proximityConfig.nextRandomBlockId();
@@ -103,7 +103,7 @@ public class Obfuscator {
 					// update block state if needed
 					if (obfuscated) {
 						chunkSection.setBlock(index, blockData);
-						if (BlockMask.isTileEntityBitSet(obfuscateBits)) {
+						if (BlockFlags.isTileEntityBitSet(obfuscateBits)) {
 							removedTileEntities.add(new BlockPos(x, y, z));
 						}
 					}
@@ -120,10 +120,10 @@ public class Obfuscator {
 	}
 
 	// returns first block below given position that wouldn't be obfuscated in any way at given position
-	private int getBlockBelow(BlockMask blockMask, Chunk chunk, int x, int y, int z) {
+	private int getBlockBelow(BlockFlags blockMask, Chunk chunk, int x, int y, int z) {
 		for (int targetY = y - 1; targetY > chunk.getHeightAccessor().getMinBuildHeight(); targetY--) {
 			int blockData = chunk.getBlock(x, targetY, z);
-			if (blockData != -1 && BlockMask.isEmpty(blockMask.mask(blockData, y))) {
+			if (blockData != -1 && BlockFlags.isEmpty(blockMask.flags(blockData, y))) {
 				return blockData;
 			}
 		}

@@ -9,68 +9,66 @@ import org.bukkit.configuration.ConfigurationSection;
 
 import net.imprex.orebfuscator.NmsInstance;
 
-public class OrebfuscatorProximityConfig extends AbstractConfig implements ProximityConfig {
+public class OrebfuscatorProximityConfig extends AbstractWorldConfig implements ProximityConfig {
 
-	private int distance;
-	private int distanceSquared;
-	private boolean useFastGazeCheck;
+	private int distance = 8;
+	private boolean useFastGazeCheck = false;
 
-	private int defaultBlockFlags = (HideCondition.MATCH_ALL | BlockMask.FLAG_USE_BLOCK_BELOW);
+	private int defaultBlockFlags = (HideCondition.MATCH_ALL | BlockFlags.FLAG_USE_BLOCK_BELOW);
 
 	private Map<Material, Integer> hiddenBlocks = new LinkedHashMap<>();
 
 	OrebfuscatorProximityConfig(ConfigurationSection section) {
 		this.enabled = section.getBoolean("enabled", true);
-		this.serializeWorlds(section, "worlds");
+		this.deserializeWorlds(section, "worlds");
 
 		this.distance = section.getInt("distance", 8);
-		this.distanceSquared = this.distance * this.distance;
 		if (this.distance < 1) {
 			this.fail("distance must be higher than zero");
 		}
-		this.useFastGazeCheck = section.getBoolean("useFastGazeCheck", true);
+		this.useFastGazeCheck = section.getBoolean("useFastGazeCheck", false);
 
-		int defaultY = section.getInt("defaults.y", 0);
+		int defaultY = section.getInt("defaults.y", Short.MIN_VALUE);
 		boolean defaultAbove = section.getBoolean("defaults.above", true);
 		this.defaultBlockFlags = HideCondition.create(defaultY, defaultAbove);
 		if (section.getBoolean("defaults.useBlockBelow", true)) {
-			this.defaultBlockFlags |= BlockMask.FLAG_USE_BLOCK_BELOW;
+			this.defaultBlockFlags |= BlockFlags.FLAG_USE_BLOCK_BELOW;
 		}
 
-		this.serializeHiddenBlocks(section, "hiddenBlocks");
-		this.serializeRandomMaterials(section, "randomBlocks");
+		this.deserializeHiddenBlocks(section, "hiddenBlocks");
+		this.deserializeRandomBlocks(section, "randomBlocks");
 	}
 
-	private void serializeHiddenBlocks(ConfigurationSection section, String path) {
-		ConfigurationSection materialSection = section.getConfigurationSection(path);
-		if (materialSection == null) {
+	private void deserializeHiddenBlocks(ConfigurationSection section, String path) {
+		ConfigurationSection blockSection = section.getConfigurationSection(path);
+		if (blockSection == null) {
 			return;
 		}
 
-		for (String name : materialSection.getKeys(false)) {
-			Optional<Material> optional = NmsInstance.getMaterialByName(name);
+		for (String blockName : blockSection.getKeys(false)) {
+			Optional<Material> optional = NmsInstance.getMaterialByName(blockName);
 			if (optional.isPresent()) {
 				int blockFlags = this.defaultBlockFlags;
 
 				// parse block specific height condition
-				if (materialSection.isInt(name + ".y") && materialSection.isBoolean(name + ".above")) {
+				if (blockSection.isInt(blockName + ".y") && blockSection.isBoolean(blockName + ".above")) {
 					blockFlags = HideCondition.remove(blockFlags);
-					blockFlags |= HideCondition.create(materialSection.getInt(name + ".y"),
-							materialSection.getBoolean(name + ".above"));
+					blockFlags |= HideCondition.create(blockSection.getInt(blockName + ".y"),
+							blockSection.getBoolean(blockName + ".above"));
 				}
 
 				// parse block specific flags
-				if (materialSection.isBoolean(name + ".useBlockBelow")) {
-					if (materialSection.getBoolean(name + ".useBlockBelow")) {
-						blockFlags |= BlockMask.FLAG_USE_BLOCK_BELOW;
+				if (blockSection.isBoolean(blockName + ".useBlockBelow")) {
+					if (blockSection.getBoolean(blockName + ".useBlockBelow")) {
+						blockFlags |= BlockFlags.FLAG_USE_BLOCK_BELOW;
 					} else {
-						blockFlags &= ~BlockMask.FLAG_USE_BLOCK_BELOW;
+						blockFlags &= ~BlockFlags.FLAG_USE_BLOCK_BELOW;
 					}
 				}
 
 				this.hiddenBlocks.put(optional.get(), blockFlags);
 			} else {
-				warnInvalidMaterial(section.getCurrentPath(), path, name);
+				warnUnkownBlock(section.getCurrentPath(), path, blockName);
 			}
 		}
 
@@ -79,21 +77,21 @@ public class OrebfuscatorProximityConfig extends AbstractConfig implements Proxi
 		}
 	}
 
-	protected void deserialize(ConfigurationSection section) {
+	protected void serialize(ConfigurationSection section) {
 		section.set("enabled", this.enabled);
-		this.deserializeWorlds(section, "worlds");
+		this.serializeWorlds(section, "worlds");
 		section.set("distance", this.distance);
 		section.set("useFastGazeCheck", this.useFastGazeCheck);
 
 		section.set("defaults.y", HideCondition.getY(this.defaultBlockFlags));
 		section.set("defaults.above", HideCondition.getAbove(this.defaultBlockFlags));
-		section.set("defaults.useBlockBelow", BlockMask.isUseBlockBelowBitSet(this.defaultBlockFlags));
+		section.set("defaults.useBlockBelow", BlockFlags.isUseBlockBelowBitSet(this.defaultBlockFlags));
 
-		this.deserializeHiddenBlocks(section, "hiddenBlocks");
-		this.deserializeRandomMaterialList(section, "randomBlocks");
+		this.serializeHiddenBlocks(section, "hiddenBlocks");
+		this.serializeRandomBlocks(section, "randomBlocks");
 	}
 
-	private void deserializeHiddenBlocks(ConfigurationSection section, String path) {
+	private void serializeHiddenBlocks(ConfigurationSection section, String path) {
 		ConfigurationSection parentSection = section.createSection(path);
 
 		for (Material material : this.hiddenBlocks.keySet()) {
@@ -107,11 +105,11 @@ public class OrebfuscatorProximityConfig extends AbstractConfig implements Proxi
 					childSection.set("above", HideCondition.getAbove(blockFlags));
 				}
 
-				if (BlockMask.isUseBlockBelowBitSet(blockFlags) != BlockMask.isUseBlockBelowBitSet(this.defaultBlockFlags)) {
-					childSection.set("useBlockBelow", BlockMask.isUseBlockBelowBitSet(blockFlags));
+				if (BlockFlags.isUseBlockBelowBitSet(blockFlags) != BlockFlags.isUseBlockBelowBitSet(this.defaultBlockFlags)) {
+					childSection.set("useBlockBelow", BlockFlags.isUseBlockBelowBitSet(blockFlags));
 				}
 			} else {
-				warnInvalidMaterial(section.getCurrentPath(), path, material != null ? material.name() : null);
+				warnUnkownBlock(section.getCurrentPath(), path, material.name());
 			}
 		}
 	}
@@ -119,11 +117,6 @@ public class OrebfuscatorProximityConfig extends AbstractConfig implements Proxi
 	@Override
 	public int distance() {
 		return this.distance;
-	}
-
-	@Override
-	public int distanceSquared() {
-		return this.distanceSquared;
 	}
 
 	@Override

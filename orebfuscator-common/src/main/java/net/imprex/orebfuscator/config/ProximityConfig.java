@@ -4,17 +4,11 @@ import java.util.Map;
 
 import org.bukkit.Material;
 
-public interface ProximityConfig {
-
-	boolean isEnabled();
+public interface ProximityConfig extends WorldConfig {
 
 	int distance();
-
-	int distanceSquared();
 
 	boolean useFastGazeCheck();
 
 	Iterable<Map.Entry<Material, Integer>> hiddenBlocks();
-
-	int nextRandomBlockId();
 }

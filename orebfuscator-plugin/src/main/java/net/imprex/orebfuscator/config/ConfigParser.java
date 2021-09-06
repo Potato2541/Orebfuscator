@@ -8,7 +8,7 @@ import org.bukkit.configuration.ConfigurationSection;
 
 public class ConfigParser {
 
-	public static List<ConfigurationSection> serializeSectionList(ConfigurationSection parentSection, String path) {
+	public static List<ConfigurationSection> deserializeSectionList(ConfigurationSection parentSection, String path) {
 		List<ConfigurationSection> sections = new ArrayList<>();
 
 		List<?> sectionList = parentSection.getList(path);

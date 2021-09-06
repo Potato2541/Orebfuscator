@@ -35,7 +35,7 @@ public class WorldMatcher implements Predicate<String> {
 		return this.pattern.matcher(value).matches();
 	}
 
-	public String deserialize() {
+	public String serialize() {
 		if (this.type == Type.REGEX) {
 			return "regex:" + this.pattern.pattern();
 		} else {
