@@ -48,8 +48,8 @@ public class Obfuscator {
 		ChunkStruct chunkStruct = request.getChunkStruct();
 		HeightAccessor heightAccessor = HeightAccessor.get(world);
 
-		BlockFlags blockMask = this.config.blockFlags(world);
-		ObfuscationConfig worldConfig = this.config.obfuscation(world);
+		BlockFlags blockFlags = this.config.blockFlags(world);
+		ObfuscationConfig obfuscationConfig = this.config.obfuscation(world);
 		ProximityConfig proximityConfig = this.config.proximity(world);
 		int initialRadius = this.config.general().initialRadius();
 
@@ -72,7 +72,7 @@ public class Obfuscator {
 
 					int y = baseY + (index >> 8 & 15);
 
-					int obfuscateBits = blockMask.flags(blockData, y);
+					int obfuscateBits = blockFlags.flags(blockData, y);
 					if (BlockFlags.isEmpty(obfuscateBits)) {
 						continue;
 					}
@@ -85,7 +85,7 @@ public class Obfuscator {
 					// should current block be obfuscated
 					if (BlockFlags.isObfuscateBitSet(obfuscateBits)
 							&& shouldObfuscate(chunk, world, x, y, z, initialRadius)) {
-						blockData = worldConfig.nextRandomBlockId();
+						blockData = obfuscationConfig.nextRandomBlockId();
 						obfuscated = true;
 					}
 
@@ -94,7 +94,7 @@ public class Obfuscator {
 						proximityBlocks.add(new BlockPos(x, y, z));
 						obfuscated = true;
 						if (BlockFlags.isUseBlockBelowBitSet(obfuscateBits)) {
-							blockData = getBlockBelow(blockMask, chunk, x, y, z);
+							blockData = getBlockBelow(blockFlags, chunk, x, y, z);
 						} else {
 							blockData = proximityConfig.nextRandomBlockId();
 						}
@@ -120,10 +120,10 @@ public class Obfuscator {
 	}
 
 	// returns first block below given position that wouldn't be obfuscated in any way at given position
-	private int getBlockBelow(BlockFlags blockMask, Chunk chunk, int x, int y, int z) {
+	private int getBlockBelow(BlockFlags blockFlags, Chunk chunk, int x, int y, int z) {
 		for (int targetY = y - 1; targetY > chunk.getHeightAccessor().getMinBuildHeight(); targetY--) {
 			int blockData = chunk.getBlock(x, targetY, z);
-			if (blockData != -1 && BlockFlags.isEmpty(blockMask.flags(blockData, y))) {
+			if (blockData != -1 && BlockFlags.isEmpty(blockFlags.flags(blockData, y))) {
 				return blockData;
 			}
 		}

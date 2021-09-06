@@ -44,15 +44,15 @@ public class Deobfuscator {
 		}
 
 		World world = Iterables.get(blocks, 0).getWorld();
-		ObfuscationConfig worldConfig = this.config.obfuscation(world);
-		if (worldConfig == null || !worldConfig.isEnabled()) {
+		ObfuscationConfig obfuscationConfig = this.config.obfuscation(world);
+		if (obfuscationConfig == null || !obfuscationConfig.isEnabled()) {
 			return;
 		}
 
 		int updateRadius = this.config.general().updateRadius();
-		BlockFlags blockMask = this.config.blockFlags(world);
+		BlockFlags blockFlags = this.config.blockFlags(world);
 
-		Processor processor = new Processor(blockMask);
+		Processor processor = new Processor(blockFlags);
 		for (Block block : blocks) {
 			if (!occluding || block.getType().isOccluding()) {
 				BlockStateHolder blockState = NmsInstance.getBlockState(world, block);
@@ -66,10 +66,10 @@ public class Deobfuscator {
 		private final Set<BlockPos> updatedBlocks = new HashSet<>();
 		private final Set<ChunkPosition> invalidChunks = new HashSet<>();
 
-		private final BlockFlags blockMask;
+		private final BlockFlags blockFlags;
 
-		public Processor(BlockFlags blockMask) {
-			this.blockMask = blockMask;
+		public Processor(BlockFlags blockFlags) {
+			this.blockFlags = blockFlags;
 		}
 
 		public void updateAdjacentBlocks(BlockStateHolder blockState, int depth) {
@@ -81,7 +81,7 @@ public class Deobfuscator {
 			BlockPos position = blockState.getPosition();
 
 			int blockId = blockState.getBlockId();
-			if (BlockFlags.isObfuscateBitSet(blockMask.flags(blockId)) && updatedBlocks.add(position)) {
+			if (BlockFlags.isObfuscateBitSet(blockFlags.flags(blockId)) && updatedBlocks.add(position)) {
 				blockState.notifyBlockChange();
 
 				if (config.cache().enabled()) {
