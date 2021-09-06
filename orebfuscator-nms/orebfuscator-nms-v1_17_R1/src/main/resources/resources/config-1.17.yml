@@ -14,7 +14,7 @@ cache:
   expireAfterAccess: 30000
   maximumTaskQueueSize: 32768
   protocolLibThreads: -1
-world:
+obfuscation:
   - worlds:
       - world
     enabled: true
