@@ -33,8 +33,10 @@ public abstract class AbstractChunkListener extends PacketAdapter {
 
 	@Override
 	public void onPacketSending(PacketEvent event) {
+		Orebfuscator.SENDING_PACKETS.incrementAndGet();
 		Player player = event.getPlayer();
 		if (this.shouldNotObfuscate(player)) {
+			Orebfuscator.SKIP_PACKETS.incrementAndGet();
 			this.skipChunkForProcessing(event);
 			return;
 		}
@@ -42,10 +44,12 @@ public abstract class AbstractChunkListener extends PacketAdapter {
 		PacketContainer packet = event.getPacket();
 		ChunkStruct chunkStruct = new ChunkStruct(packet, player.getWorld());
 		if (chunkStruct.isEmpty()) {
+			Orebfuscator.SKIP_PACKETS.incrementAndGet();
 			this.skipChunkForProcessing(event);
 			return;
 		}
 
+		Orebfuscator.PRE_PACKETS.incrementAndGet();
 		this.preChunkProcessing(event, chunkStruct);
 
 		this.obfuscatorSystem.obfuscateOrUseCache(chunkStruct).thenAccept(chunk -> {
@@ -53,6 +57,7 @@ public abstract class AbstractChunkListener extends PacketAdapter {
 			packet.getByteArrays().write(0, chunk.getData());
 			this.removeTileEntitiesFromPacket(packet, chunk.getRemovedTileEntities());
 
+			Orebfuscator.POST_PACKETS.incrementAndGet();
 			this.postChunkProcessing(event, chunkStruct, chunk);
 		});
 	}

@@ -33,22 +33,20 @@ public class ObfuscatorSystem {
 		Bukkit.getPluginManager().registerEvents(new DeobfuscationListener(orebfuscator, this.deobfuscator), orebfuscator);
 	}
 
-	@SuppressWarnings("unused")
 	public void registerChunkListener() {
-		if (this.config.cache().enabled() || true) {
+		if (this.config.cache().enabled()) {
 			this.chunkListener = new AsyncChunkListener(orebfuscator);
 		} else {
 			this.chunkListener = new SyncChunkListener(orebfuscator);
 		}
 	}
 
-	@SuppressWarnings("unused")
 	public CompletableFuture<ObfuscatedChunk> obfuscateOrUseCache(ChunkStruct chunkStruct) {
 		final ChunkPosition position = new ChunkPosition(chunkStruct.world, chunkStruct.chunkX, chunkStruct.chunkZ);
 		final byte[] hash = ChunkCache.hash(this.config.configHash(), chunkStruct.data);
 		final ChunkCacheRequest request = new ChunkCacheRequest(this.obfuscator, position, hash, chunkStruct);
 
-		if (this.config.cache().enabled() && false) {
+		if (this.config.cache().enabled()) {
 			return this.chunkCache.get(request);
 		} else {
 			return this.obfuscator.obfuscate(request);

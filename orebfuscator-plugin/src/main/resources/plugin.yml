@@ -11,6 +11,9 @@ authors: [NgLoader, lishid, SydMontague, ProgrammerDan, Aleksey-Terzi]
 
 depend: [ProtocolLib]
 
+commands:
+  ofc:
+
 permissions:
   orebfuscator.*:
     default: false

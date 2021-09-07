@@ -31,6 +31,7 @@ public class Obfuscator {
 	}
 
 	public CompletableFuture<ObfuscatedChunk> obfuscate(ChunkCacheRequest request) {
+		Orebfuscator.OBFUSCATE_REQUEST.incrementAndGet();
 		CompletableFuture<ObfuscatedChunk> future = new CompletableFuture<>();
 		if (this.orebfuscator.isMainThread()) {
 			future.complete(this.obfuscateNow(request));
@@ -116,6 +117,8 @@ public class Obfuscator {
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new Error(e);
+		} finally {
+			Orebfuscator.OBFUSCATE_DONE.incrementAndGet();
 		}
 	}
 

@@ -70,12 +70,14 @@ public class ChunkCache {
 	}
 
 	public CompletableFuture<ObfuscatedChunk> get(ChunkCacheRequest request) {
+		Orebfuscator.CACHE_REQUEST.incrementAndGet();
 		CompletableFuture<ObfuscatedChunk> future = new CompletableFuture<>();
 		this.cacheExecutor.execute(() -> {
 			ChunkPosition key = request.getKey();
 
 			ObfuscatedChunk cacheChunk = this.cache.getIfPresent(key);
 			if (request.isValid(cacheChunk)) {
+				Orebfuscator.CACHE_HIT_MEMORY.incrementAndGet();
 				future.complete(cacheChunk);
 				return;
 			}
@@ -84,6 +86,7 @@ public class ChunkCache {
 			this.serializer.read(key).thenAcceptAsync(diskChunk -> {
 				if (request.isValid(diskChunk)) {
 					this.cache.put(key, diskChunk);
+					Orebfuscator.CACHE_HIT_MEMORY.incrementAndGet();
 					future.complete(diskChunk);
 					return;
 				}
