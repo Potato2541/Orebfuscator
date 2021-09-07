@@ -96,7 +96,7 @@ public class DeobfuscationListener implements Listener {
 		Player player = event.getPlayer();
 
 		if (this.config.general().bypassNotification() && PermissionUtil.canDeobfuscate(player)) {
-			player.sendMessage("[§bOrebfuscator§f]§7 Orebfuscator bypassed.");
+			player.sendMessage("[§bOrebfuscator§f]§7 You bypass Orebfuscator because you have the 'orebfuscator.bypass' permission.");
 		}
 
 		if (PermissionUtil.canCheckForUpdates(player)) {

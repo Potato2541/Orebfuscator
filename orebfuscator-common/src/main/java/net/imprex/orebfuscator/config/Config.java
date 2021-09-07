@@ -8,15 +8,15 @@ public interface Config {
 
 	CacheConfig cache();
 
-	BlockMask blockMask(World world);
+	BlockFlags blockFlags(World world);
 
 	boolean needsObfuscation(World world);
 
-	WorldConfig world(World world);
+	ObfuscationConfig obfuscation(World world);
 	
 	boolean proximityEnabled();
 
 	ProximityConfig proximity(World world);
 
-	byte[] hash();
+	byte[] configHash();
 }

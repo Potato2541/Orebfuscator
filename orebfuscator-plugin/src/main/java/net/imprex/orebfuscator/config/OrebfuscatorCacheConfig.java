@@ -28,9 +28,9 @@ public class OrebfuscatorCacheConfig implements CacheConfig {
 	private int protocolLibThreads = -1;
 	private boolean protocolLibThreadsSet = false;
 
-	public void serialize(ConfigurationSection section) {
+	public void deserialize(ConfigurationSection section) {
 		this.enabled(section.getBoolean("enabled", true));
-		this.serializeBaseDirectory(section, "orebfuscator_cache/");
+		this.deserializeBaseDirectory(section, "orebfuscator_cache/");
 
 		this.maximumOpenRegionFiles(section.getInt("maximumOpenRegionFiles", 256));
 		this.deleteRegionFilesAfterAccess(section.getLong("deleteRegionFilesAfterAccess", TimeUnit.DAYS.toMillis(2)));
@@ -42,7 +42,7 @@ public class OrebfuscatorCacheConfig implements CacheConfig {
 		this.protocolLibThreads(section.getInt("protocolLibThreads", -1));
 	}
 
-	public void deserialize(ConfigurationSection section) {
+	public void serialize(ConfigurationSection section) {
 		section.set("enabled", this.enabled);
 		section.set("baseDirectory", this.baseDirectory.toString());
 
@@ -56,7 +56,7 @@ public class OrebfuscatorCacheConfig implements CacheConfig {
 		section.set("protocolLibThreads", this.protocolLibThreadsSet ? this.protocolLibThreads : -1);
 	}
 
-	private void serializeBaseDirectory(ConfigurationSection section, String defaultPath) {
+	private void deserializeBaseDirectory(ConfigurationSection section, String defaultPath) {
 		Path worldPath = Bukkit.getWorldContainer().toPath().toAbsolutePath().normalize();
 		String baseDirectory = section.getString("baseDirectory", defaultPath);
 

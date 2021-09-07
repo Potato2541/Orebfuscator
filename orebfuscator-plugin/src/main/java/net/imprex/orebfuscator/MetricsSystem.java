@@ -6,6 +6,7 @@ import java.util.Map;
 import org.bstats.bukkit.Metrics;
 
 import net.imprex.orebfuscator.config.OrebfuscatorConfig;
+import net.imprex.orebfuscator.util.MathUtil;
 
 public class MetricsSystem {
 
@@ -18,19 +19,17 @@ public class MetricsSystem {
 	}
 
 	public void addMemoryChart() {
-		this.metrics.addCustomChart(new Metrics.DrilldownPie("system_memory", () -> {
+		this.metrics.addCustomChart(new Metrics.DrilldownPie("systemMemory", () -> {
 			final Map<String, Map<String, Integer>> result = new HashMap<>();
 			final Map<String, Integer> exact = new HashMap<>();
 
 			long memory = Runtime.getRuntime().maxMemory();
 			if (memory == Long.MAX_VALUE) {
-				exact.put("unbound", 1);
-				result.put("unbound", exact);
+				result.put("unlimited", exact);
 			} else {
-				long megaByte = (long) Math.ceil(memory / 1048576d);
-				long gigaByte = (long) Math.ceil(memory / 1073741824d);
-				exact.put(megaByte + "MiB", 1);
-				result.put(gigaByte + "GiB", exact);
+				int gibiByte = (int) (memory / 1073741824L);
+				exact.put(gibiByte + "GiB", 1);
+				result.put(MathUtil.ceilToPowerOfTwo(gibiByte) + "GiB", exact);
 			}
 
 			return result;

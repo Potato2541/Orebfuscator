@@ -13,12 +13,12 @@ import net.imprex.orebfuscator.cache.ChunkCacheRequest;
 import net.imprex.orebfuscator.chunk.Chunk;
 import net.imprex.orebfuscator.chunk.ChunkSection;
 import net.imprex.orebfuscator.chunk.ChunkStruct;
-import net.imprex.orebfuscator.config.BlockMask;
+import net.imprex.orebfuscator.config.BlockFlags;
 import net.imprex.orebfuscator.config.OrebfuscatorConfig;
 import net.imprex.orebfuscator.config.ProximityConfig;
-import net.imprex.orebfuscator.config.WorldConfig;
+import net.imprex.orebfuscator.config.ObfuscationConfig;
 import net.imprex.orebfuscator.util.BlockPos;
-import net.imprex.orebfuscator.util.MaterialUtil;
+import net.imprex.orebfuscator.util.HeightAccessor;
 
 public class Obfuscator {
 
@@ -46,9 +46,10 @@ public class Obfuscator {
 		World world = request.getKey().getWorld();
 		byte[] hash = request.getHash();
 		ChunkStruct chunkStruct = request.getChunkStruct();
+		HeightAccessor heightAccessor = HeightAccessor.get(world);
 
-		BlockMask blockMask = this.config.blockMask(world);
-		WorldConfig worldConfig = this.config.world(world);
+		BlockFlags blockFlags = this.config.blockFlags(world);
+		ObfuscationConfig obfuscationConfig = this.config.obfuscation(world);
 		ProximityConfig proximityConfig = this.config.proximity(world);
 		int initialRadius = this.config.general().initialRadius();
 
@@ -65,14 +66,14 @@ public class Obfuscator {
 					continue;
 				}
 
-				final int baseY = sectionIndex * 16;
+				final int baseY = heightAccessor.getMinBuildHeight() + (sectionIndex << 4);
 				for (int index = 0; index < 4096; index++) {
 					int blockData = chunkSection.getBlock(index);
 
 					int y = baseY + (index >> 8 & 15);
 
-					int obfuscateBits = blockMask.mask(blockData, y);
-					if (BlockMask.isEmpty(obfuscateBits)) {
+					int obfuscateBits = blockFlags.flags(blockData, y);
+					if (BlockFlags.isEmpty(obfuscateBits)) {
 						continue;
 					}
 
@@ -82,27 +83,27 @@ public class Obfuscator {
 					boolean obfuscated = false;
 
 					// should current block be obfuscated
-					if (BlockMask.isObfuscateBitSet(obfuscateBits)
+					if (BlockFlags.isObfuscateBitSet(obfuscateBits)
 							&& shouldObfuscate(chunk, world, x, y, z, initialRadius)) {
-						blockData = worldConfig.randomBlockId();
+						blockData = obfuscationConfig.nextRandomBlockId();
 						obfuscated = true;
 					}
 
 					// should current block be proximity hidden
-					if (!obfuscated && BlockMask.isProximityBitSet(obfuscateBits)) {
+					if (!obfuscated && BlockFlags.isProximityBitSet(obfuscateBits)) {
 						proximityBlocks.add(new BlockPos(x, y, z));
 						obfuscated = true;
-						if (BlockMask.isUseBlockBelowBitSet(obfuscateBits)) {
-							blockData = getBlockBelow(blockMask, chunk, x, y, z);
+						if (BlockFlags.isUseBlockBelowBitSet(obfuscateBits)) {
+							blockData = getBlockBelow(blockFlags, chunk, x, y, z);
 						} else {
-							blockData = proximityConfig.randomBlockId();
+							blockData = proximityConfig.nextRandomBlockId();
 						}
 					}
 
 					// update block state if needed
 					if (obfuscated) {
 						chunkSection.setBlock(index, blockData);
-						if (BlockMask.isTileEntityBitSet(obfuscateBits)) {
+						if (BlockFlags.isTileEntityBitSet(obfuscateBits)) {
 							removedTileEntities.add(new BlockPos(x, y, z));
 						}
 					}
@@ -119,10 +120,10 @@ public class Obfuscator {
 	}
 
 	// returns first block below given position that wouldn't be obfuscated in any way at given position
-	private int getBlockBelow(BlockMask blockMask, Chunk chunk, int x, int y, int z) {
-		for (int targetY = y - 1; targetY > 0; targetY--) {
+	private int getBlockBelow(BlockFlags blockFlags, Chunk chunk, int x, int y, int z) {
+		for (int targetY = y - 1; targetY > chunk.getHeightAccessor().getMinBuildHeight(); targetY--) {
 			int blockData = chunk.getBlock(x, targetY, z);
-			if (blockData != -1 && BlockMask.isEmpty(blockMask.mask(blockData, y))) {
+			if (blockData != -1 && BlockFlags.isEmpty(blockFlags.flags(blockData, y))) {
 				return blockData;
 			}
 		}
@@ -135,7 +136,7 @@ public class Obfuscator {
 
 	private boolean areAjacentBlocksTransparent(Chunk chunk, World world, int x, int y, int z, boolean check,
 			int depth) {
-		if (y >= world.getMaxHeight() || y < 0) {
+		if (y >= world.getMaxHeight() || y < chunk.getHeightAccessor().getMinBuildHeight()) {
 			return true;
 		}
 
@@ -144,7 +145,7 @@ public class Obfuscator {
 			if (blockId == -1) {
 				blockId = NmsInstance.loadChunkAndGetBlockId(world, x, y, z);
 			}
-			if (blockId >= 0 && MaterialUtil.isTransparent(blockId)) {
+			if (blockId >= 0 && !NmsInstance.isOccluding(blockId)) {
 				return true;
 			}
 		}

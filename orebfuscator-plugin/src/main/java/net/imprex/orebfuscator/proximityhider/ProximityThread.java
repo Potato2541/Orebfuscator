@@ -54,12 +54,12 @@ public class ProximityThread extends Thread {
 
 					ProximityConfig proximityConfig = this.config.proximity(world);
 					ProximityPlayer proximityPlayer = this.dataManager.get(player);
-					if (proximityPlayer == null || proximityConfig == null || !proximityConfig.enabled() || !proximityPlayer.getWorld().equals(world)) {
+					if (proximityPlayer == null || proximityConfig == null || !proximityConfig.isEnabled() || !proximityPlayer.getWorld().equals(world)) {
 						continue;
 					}
 
 					int distance = proximityConfig.distance();
-					int distanceSquared = proximityConfig.distanceSquared();
+					int distanceSquared = distance * distance;
 
 					List<BlockPos> updateBlocks = new ArrayList<>();
 					Location eyeLocation = player.getEyeLocation();

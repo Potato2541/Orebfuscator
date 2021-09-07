@@ -1,6 +1,6 @@
 package net.imprex.orebfuscator.config;
 
-public interface BlockMask {
+public interface BlockFlags {
 
 	public static final int FLAG_OBFUSCATE = 1;
 	public static final int FLAG_TILE_ENTITY = 2;
@@ -8,7 +8,7 @@ public interface BlockMask {
 	public static final int FLAG_USE_BLOCK_BELOW = 8;
 
 	public static boolean isEmpty(int mask) {
-		return (mask & 0x7F) == 0;
+		return (mask & 0xFFF) == 0;
 	}
 
 	public static boolean isBitSet(int mask, int flag) {
@@ -31,7 +31,7 @@ public interface BlockMask {
 		return isBitSet(mask, FLAG_USE_BLOCK_BELOW);
 	}
 
-	int mask(int blockId);
+	int flags(int blockId);
 
-	int mask(int blockId, int y);
+	int flags(int blockId, int y);
 }

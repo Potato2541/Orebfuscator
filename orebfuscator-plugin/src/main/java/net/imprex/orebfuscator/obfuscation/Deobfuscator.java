@@ -13,9 +13,9 @@ import com.google.common.collect.Iterables;
 import net.imprex.orebfuscator.NmsInstance;
 import net.imprex.orebfuscator.Orebfuscator;
 import net.imprex.orebfuscator.cache.ChunkCache;
-import net.imprex.orebfuscator.config.BlockMask;
+import net.imprex.orebfuscator.config.BlockFlags;
 import net.imprex.orebfuscator.config.OrebfuscatorConfig;
-import net.imprex.orebfuscator.config.WorldConfig;
+import net.imprex.orebfuscator.config.ObfuscationConfig;
 import net.imprex.orebfuscator.nms.BlockStateHolder;
 import net.imprex.orebfuscator.util.BlockPos;
 import net.imprex.orebfuscator.util.ChunkPosition;
@@ -44,15 +44,15 @@ public class Deobfuscator {
 		}
 
 		World world = Iterables.get(blocks, 0).getWorld();
-		WorldConfig worldConfig = this.config.world(world);
-		if (worldConfig == null || !worldConfig.enabled()) {
+		ObfuscationConfig obfuscationConfig = this.config.obfuscation(world);
+		if (obfuscationConfig == null || !obfuscationConfig.isEnabled()) {
 			return;
 		}
 
 		int updateRadius = this.config.general().updateRadius();
-		BlockMask blockMask = this.config.blockMask(world);
+		BlockFlags blockFlags = this.config.blockFlags(world);
 
-		Processor processor = new Processor(blockMask);
+		Processor processor = new Processor(blockFlags);
 		for (Block block : blocks) {
 			if (!occluding || block.getType().isOccluding()) {
 				BlockStateHolder blockState = NmsInstance.getBlockState(world, block);
@@ -66,10 +66,10 @@ public class Deobfuscator {
 		private final Set<BlockPos> updatedBlocks = new HashSet<>();
 		private final Set<ChunkPosition> invalidChunks = new HashSet<>();
 
-		private final BlockMask blockMask;
+		private final BlockFlags blockFlags;
 
-		public Processor(BlockMask blockMask) {
-			this.blockMask = blockMask;
+		public Processor(BlockFlags blockFlags) {
+			this.blockFlags = blockFlags;
 		}
 
 		public void updateAdjacentBlocks(BlockStateHolder blockState, int depth) {
@@ -81,7 +81,7 @@ public class Deobfuscator {
 			BlockPos position = blockState.getPosition();
 
 			int blockId = blockState.getBlockId();
-			if (BlockMask.isObfuscateBitSet(blockMask.mask(blockId)) && updatedBlocks.add(position)) {
+			if (BlockFlags.isObfuscateBitSet(blockFlags.flags(blockId)) && updatedBlocks.add(position)) {
 				blockState.notifyBlockChange();
 
 				if (config.cache().enabled()) {
